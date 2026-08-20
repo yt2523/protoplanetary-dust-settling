@@ -1,0 +1,28 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Archives / submission bundles / drafts ----
+*.zip
+*.docx
+~$*
+
+# ---- Locally generated output ----
+# figures in results/ are committed deliberately; ad-hoc runs are not
+*.npy
+*.npz
+resolution_profiles.png
+_numbers.txt
+_*.txt
