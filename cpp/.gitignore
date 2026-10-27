@@ -13,3 +13,10 @@ validation/*.log
 # Python caches
 __pycache__/
 *.pyc
+
+# Bounded-reference transient scratch
+validation/_ref_scratch/
+D:/Codex/tmp/regress/
+
+# Research scratch (parallel literature audit)
+research/.cache/

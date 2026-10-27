@@ -114,3 +114,6 @@ PORTING.md        移植映射、保留的怪癖、限制与来源声明
 原始仓库根目录**未观察到 LICENSE 文件**，源文件亦无许可头，因此本项目**不臆造 MIT 或任何授权**，
 仅保留来源与作者署名：原仓库 `yt2523/protoplanetary-dust-settling`，提交 `6dd899a…`，
 Imperial College London Year-3 Computational Physics (Project 2)。详见 PORTING.md。
+
+## 独立研究迭代
+文献驱动的正性步长、边界与平衡实验见 [research/README.md](research/README.md)，结果见 [research/RESULTS.md](research/RESULTS.md)，审查深度见 [LITERATURE_AUDIT.md](LITERATURE_AUDIT.md)。这些开关仅在独立Python实验中实现，C++默认仍忠实保留原行为。

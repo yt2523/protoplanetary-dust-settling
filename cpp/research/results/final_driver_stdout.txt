@@ -1,0 +1,6 @@
+artifacts written to D:\Codex\tmp\dust-cpp-publish-20261027\cpp\research\results
+  csv: D:\Codex\tmp\dust-cpp-publish-20261027\cpp\research\results\results.csv
+  json: D:\Codex\tmp\dust-cpp-publish-20261027\cpp\research\results\results.json
+  source sha256: 3fdea0d9632bcb538c65ec4203846047c07e0f6b91584762e31e0b350d304459
+  time_refinement rms_decreases: True
+  boundary dt_equal: 0.0

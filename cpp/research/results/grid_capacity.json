@@ -1,0 +1,9 @@
+{
+  "sourceSHA": "1df12a933235d5224bcedcfa02119ef85b827c992a2806d51657a466b08b5165",
+  "maxboundN100": 0.9790081261591845,
+  "maxboundN200": 1.9577023021304154,
+  "finalmaxratio": 0.6640702947148133,
+  "massresidual": -1.3010426069826053e-18,
+  "tails_pass": true,
+  "note": "N100 strict>1 impossible under one-way laminar, no diffusion/inflow, nonnegative and monotone gas; N200 capacity permits does not predict crossing."
+}

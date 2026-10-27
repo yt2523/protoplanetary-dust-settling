@@ -1,0 +1,26 @@
+{
+  "steps": [
+    {
+      "tag": "driver",
+      "cmd": "C:\\Users\\PC\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -B run_experiments.py",
+      "returncode": 0,
+      "elapsed": 1.3493752479553223,
+      "timeout": 30
+    },
+    {
+      "tag": "pytest",
+      "cmd": "C:\\Users\\PC\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -B -m pytest -q test_experiments.py test_finalization.py",
+      "returncode": 0,
+      "elapsed": 1.4578464031219482,
+      "timeout": 30
+    },
+    {
+      "tag": "grid_capacity",
+      "cmd": "C:\\Users\\PC\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -B audit_grid_capacity.py",
+      "returncode": 0,
+      "elapsed": 1.2026746273040771,
+      "timeout": 30
+    }
+  ],
+  "final_returncode": 0
+}
