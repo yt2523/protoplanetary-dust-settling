@@ -49,6 +49,9 @@ SRC = _default_source()
 _BIN_REL = os.path.join(ROOT, "build-cmake", "dust_settling")
 
 CASES_DIR = os.path.join(ROOT, "validation", "cases")
+# Scratch for the bounded Python-reference subprocess transient files.
+_SCRATCH_DIR = os.path.join(ROOT, "validation", "_ref_scratch")
+os.makedirs(_SCRATCH_DIR, exist_ok=True)
 RESULTS_CSV = os.path.join(ROOT, "validation", "results.csv")
 RESULTS_JSON = os.path.join(ROOT, "validation", "results.json")
 
@@ -338,6 +341,52 @@ def _windows_to_linux_path(win_path):
     return p
 
 
+def _run_python_reference_bounded(mode, cpp_args, source_repo, work_dir):
+    """Run ONE original-Python reference case in a bounded subprocess.
+
+    Review fix #5: the in-process reference cannot enforce a wall-clock bound, so
+    each reference runs in an isolated subprocess (``_ref_worker.py``) with a 30 s
+    timeout and NO retry.  Returns (p_diag, p_prof); raises on timeout/nonzero so
+    a hung/slow reference is a hard FAIL, never silently passed.
+    """
+    import tempfile
+    worker = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_ref_worker.py")
+    # Transient scratch unique per call (never pollute CASES_DIR with ref.* files).
+    scratch = tempfile.mkdtemp(prefix="ref_", dir=_SCRATCH_DIR)
+    prefix = os.path.join(scratch, "ref")
+    argv = [sys.executable, "-B", worker, prefix, source_repo, mode] + [str(a) for a in cpp_args]
+    try:
+        proc = subprocess.run(argv, capture_output=True, text=True, timeout=30)
+    except subprocess.TimeoutExpired as e:
+        raise TimeoutError("Python reference timed out (30s) for mode=%s" % mode) from e
+    if proc.returncode != 0:
+        raise RuntimeError("Python reference failed rc=%s\nstdout=%s\nstderr=%s"
+                           % (proc.returncode, proc.stdout, proc.stderr))
+    with open(prefix + ".json", "r", encoding="utf-8") as f:
+        p_diag = json.load(f)
+    # Restore None -> NaN for the float diagnostics the worker serialized as null
+    # (NaN is not valid JSON).  Bool/int fields are untouched.
+    _float_keys = ("dt", "h", "L", "t_actual", "mass_initial", "mass_final",
+                   "min_rho", "max_rho", "cumulative_boundary_flux", "t_formation",
+                   "t_formation_years", "t_actual_years", "v_max", "alpha",
+                   "z_real_max", "real_z_max", "rho_initial_max", "scale_height")
+    for k in _float_keys:
+        if p_diag.get(k) is None:
+            p_diag[k] = float("nan")
+        else:
+            p_diag[k] = float(p_diag[k])
+    z = np.load(prefix + ".npz")
+    p_prof = (z["coord"], z["rho_final"], z["rho_init"], z["aux"])
+    z.close()  # release the file handle so Windows can delete the scratch
+    # Best-effort cleanup of the transient scratch (not fatal if it fails).
+    try:
+        import shutil
+        shutil.rmtree(scratch, ignore_errors=True)
+    except Exception:
+        pass
+    return p_diag, p_prof
+
+
 _ACTIVE_BIN = None  # set by main() from argparse
 
 
@@ -607,12 +656,27 @@ def check_case(tag, p_diag, p_prof, mode, cpp_args):
 
     # Finite / min over every step.
     r["finite"] = int(c_diag["finite"])
-    r["finite_ok"] = int(c_diag["finite"]) == 1 and p_diag["finite"]
-    peak = max(abs(float(p_diag["rho_initial_max"])) if not is_nan(p_diag["rho_initial_max"])
-               else np.max(np.abs(P_rhoi)), np.max(np.abs(P_rhoi)), 1.0)
+    r["finite_ok"] = int(c_diag["finite"]) == 1 and bool(p_diag["finite"])
+    # Initial DUST peak (review fix #2): for disks dust = 0.01*gas, so the peak is
+    # 0.01 * max(|gas|); for advection the initial profile IS the dust (no factor).
+    # No max(..., 1.0) floor — that fixed floor silently widened the tolerance.
+    gas_peak = np.max(np.abs(P_rhoi))
+    if r["mode"] == "advection":
+        dust_peak = gas_peak
+    else:
+        dust_peak = 0.01 * gas_peak
+    r["dust_peak"] = float(dust_peak)
     r["min_rho"] = float(c_diag["min_rho"])
-    r["min_rho_ok"] = float(c_diag["min_rho"]) >= -1e-14 * peak
     r["min_rho_py"] = float(p_diag["min_rho"])
+    # Positivity gate against the initial dust peak (strict, no 1.0 floor).
+    r["min_rho_ok"] = bool(float(c_diag["min_rho"]) >= -1e-14 * dust_peak)
+    # Explicit Python-vs-C++ monitored-minimum comparison via the same strict gate
+    # (review fix #2): matches the requirement to compare monitored minima and
+    # require finiteness on BOTH sides.
+    r["min_rho_match_ok"] = bool(
+        fp_close(float(c_diag["min_rho"]), float(p_diag["min_rho"]))
+        and not is_nan(float(c_diag["min_rho"]))
+        and not is_nan(float(p_diag["min_rho"])))
 
     # Formation time: absent tf may match NaN; unexpected/unmatched nan/inf fails.
     tf_p = p_diag["t_formation"]
@@ -637,12 +701,19 @@ def check_case(tag, p_diag, p_prof, mode, cpp_args):
               "t_actual_ok", "v_max_ok", "scale_height_ok", "z_real_max_ok",
               "real_z_max_ok", "rho_initial_max_ok", "t_actual_years_ok",
               "Nt_ok", "steps_ok", "mass_balance_ok", "flux_ok", "finite_ok",
-              "min_rho_ok", "t_formation_ok", "alpha_ok"]
-    # M_initial/M_final recomp all must be close (strict gate as well).
-    if not fp_close(c_diag["mass_initial"], c_M_init):
-        checks.append("M_initial_recomp")
-    if not fp_close(c_diag["mass_final"], c_M_final):
-        checks.append("M_final_recomp")
+              "min_rho_ok", "min_rho_match_ok", "t_formation_ok", "alpha_ok"]
+    # Emitted masses vs independently recomputed masses use explicit Boolean
+    # gates (review fix #1): the numeric recomputed values must never be read as
+    # truthy.  Check BOTH close AND record the Boolean verdicts so a mutation to
+    # the emitted mass flips emitted_mass_*_ok to False and fails the case.
+    emitted_mass_initial_ok = fp_close(c_diag["mass_initial"], c_M_init)
+    emitted_mass_final_ok = fp_close(c_diag["mass_final"], c_M_final)
+    r["emitted_mass_initial_ok"] = bool(emitted_mass_initial_ok)
+    r["emitted_mass_final_ok"] = bool(emitted_mass_final_ok)
+    if not emitted_mass_initial_ok:
+        checks.append("emitted_mass_initial_ok")
+    if not emitted_mass_final_ok:
+        checks.append("emitted_mass_final_ok")
     failed = [c for c in checks if not r.get(c, True)]
     r["failed_checks"] = sorted(set(failed))
     if failed:
@@ -672,7 +743,8 @@ def _D_for_alpha(R_AU, alpha):
 
 def _cases():
     # representative diffusion disk: R=100, alpha=1e-3, Nz=64, zmax in natural
-    # units (zmax is expressed in H here via zmax_arg), ~6859 yr, adv=.3 diff=.2
+    # units (zmax is expressed in H here via zmax_arg), requested 5000 yr,
+    # actual t_actual_years=4973.610706, adv=.3 diff=.2
     R100 = 100.0
     D_1e3 = _D_for_alpha(R100, 1e-3)
     D_str = _D_for_alpha(R100, 1e-1)  # stress case: alpha=0.1 makes diffusion bind
@@ -724,12 +796,14 @@ def _cases():
         ("turbulence", ["10000", "400", "0.3", "0.2", "100", "1000", "50", "1e-05", "1000", "1", "0"],
          "turb_cross_continue"),
         # representative diffusion (review item 2): nontrivial stratification,
-        # measurable nonzero upper leakage, adv=.3 diff=.2, ~6859 yr
+        # measurable nonzero upper leakage, adv=.3 diff=.2, requested 5000 yr,
+        # actual t_actual_years=4973.610706
         ("turbulence", ["5000", "64", "0.3", "0.2", "100", "1", g(zmax_2H), g(D_1e3), "1000", "1", "0"],
          "turb_diff_repr"),
         # short bounded diff=.7 stress case (review item 2): EXPECTED_INSTABILITY,
         # inherited negative rho reported separately, never clipped as PASS.
-        # alpha=0.1 (D=5.47e13) so the diffusion dt actually binds at d_lim=.7.
+        # alpha=0.1 (D=5.47e13) so the diffusion dt actually binds at d_lim=.7;
+        # requested 1000 yr, actual t_actual_years=998.735546.
         ("turbulence", ["1000", "48", "0.3", "0.7", "100", "1", g(zmax_3p5H), g(D_str), "1000", "1", "0"],
          "turb_diff_stress"),
     ]
@@ -799,24 +873,13 @@ def main(argv=None):
 
     cases = _cases()
 
-    # Map a mode + numeric CPP args to a Python reference builder call.
+    # Map a mode + numeric CPP args to a Python reference run in a BOUNDED
+    # subprocess (review fix #5): 30 s timeout, no retry, per case.  This is the
+    # only way to enforce a wall-clock bound since the in-process solver has no
+    # internal timeout.  The original classes/method wrappers are preserved inside
+    # `_ref_worker.py` -> `run_python_*`.
     def py_ref(mode, cpp_args):
-        if mode == "advection":
-            v, dt, T, Nx = (float(cpp_args[0]), float(cpp_args[1]),
-                            float(cpp_args[2]), int(cpp_args[3]))
-            return run_python_advection(v, dt, T, Nx)
-        if mode == "laminar":
-            total_time, Nz, a_lim, R_AU, a_mic, zmax, dd, stop = cpp_args
-            return run_python_laminar(float(total_time), int(Nz), float(a_lim),
-                                      float(R_AU), float(a_mic), float(zmax),
-                                      float(dd), bool(int(stop)))
-        if mode == "turbulence":
-            total, Nz, a, d, R_AU, amic, zmax, D, dd, vcap, stop = cpp_args
-            return run_python_turbulence(float(total), int(Nz), float(a), float(d),
-                                         float(R_AU), float(amic), float(zmax),
-                                         float(D), float(dd), float(vcap),
-                                         bool(int(stop)))
-        raise ValueError(mode)
+        return _run_python_reference_bounded(mode, cpp_args, resolved_src, CASES_DIR)
 
     results = []
     stress_tags = {"turb_diff_stress"}
@@ -869,7 +932,9 @@ def main(argv=None):
     csv_cols = ["tag", "mode", "N", "status", "note", "rho_max_abs_diff", "rho_rel_to_peak",
                 "rho_masked_rel_max", "grid_max_abs_diff", "rhoi_max_abs_diff",
                 "aux_max_abs_diff", "dt_abs_diff", "t_actual_abs_diff",
-                "mass_residual_indep", "min_rho", "t_formation_abs_diff"]
+                "mass_residual_indep", "min_rho", "min_rho_py",
+                "emitted_mass_initial_ok", "emitted_mass_final_ok",
+                "min_rho_match_ok", "t_formation_abs_diff"]
     with open(RESULTS_CSV, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=csv_cols, extrasaction="ignore")
         w.writeheader()

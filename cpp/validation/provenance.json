@@ -1,0 +1,39 @@
+{
+  "generated": "2026-10-27",
+  "layout": "publication cpp/ at D:/Codex/tmp/dust-cpp-publish-20261027/cpp",
+  "source": {
+    "repo": "https://github.com/yt2523/protoplanetary-dust-settling",
+    "ref": "main@6dd899a89203fb88c8724e69e10c208e4faf6d66",
+    "checkpoint": "cpp-port/cpp17 @ 1b6fe48f03b07825919d064ce164b5319a0144fa",
+    "modules": {
+      "pure_advection.py": "84e83403ed01867305fc4fa53e336ec0c12d6dd31b5e9e9d0420fbd7188d7370",
+      "dust_solver.py": "1df12a933235d5224bcedcfa02119ef85b827c992a2806d51657a466b08b5165",
+      "dust_solver_turbulence.py": "3fdea0d9632bcb538c65ec4203846047c07e0f6b91584762e31e0b350d304459"
+    },
+    "sha_before": "329b3c5279a5e106ba3964d9bb301dff7ce33a2e4ea19fc71d7207ae9ed25d6d",
+    "sha_after": "329b3c5279a5e106ba3964d9bb301dff7ce33a2e4ea19fc71d7207ae9ed25d6d",
+    "unchanged": true
+  },
+  "toolchain": {
+    "compiler": "g++ (Ubuntu 15.2.0) GNU 15.2.0",
+    "cmake": "4.4.4 (bundled .tools/cmake, absolute command)",
+    "python": "3.12.10 (C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe)"
+  },
+  "commands": {
+    "configure": "wsl bash -lc 'cd /mnt/d/Codex/tmp/dust-cpp-publish-20261027/cpp && TMPDIR=/mnt/d/Codex/tmp /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake -S . -B build-cmake -DCMAKE_BUILD_TYPE=Release'",
+    "build": "wsl bash -lc 'cd /mnt/d/Codex/tmp/dust-cpp-publish-20261027/cpp && TMPDIR=/mnt/d/Codex/tmp <cmake> --build build-cmake -j4'",
+    "unit_tests": "python.exe -m pytest verify/test_gates.py -v",
+    "regression": "python.exe -B verify/regression.py",
+    "harness": "python.exe -B verify/verify.py",
+    "plot": "python.exe -B verify/plot.py"
+  },
+  "outcome": {
+    "unit_tests": "5 passed",
+    "regression": "20 checks, 0 failed",
+    "harness": "19 cases, 0 failed, 1 EXPECTED_INSTABILITY (turb_diff_stress)",
+    "convergence_order": 0.9003,
+    "diff_repr_t_actual_years": 4973.6107064313401,
+    "stress_t_actual_years": 998.73554601351816,
+    "plot": "validation/profiles_compare.png"
+  }
+}

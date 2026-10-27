@@ -1,0 +1,9 @@
+10/27/2026 06:34:02
+wsl.exe bash -lc 'cd /mnt/d/Codex/tmp/dust-cpp-publish-20261027/cpp && TMPDIR=/mnt/d/Codex/tmp /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake --build build-c ... [command truncated: 25 more chars; full command is in the tool call input]
+gmake: jobserver mkfifo: /mnt/d/Codex/tmp/GMfifo41295: Operation not supported
+[ 25%] Building CXX object CMakeFiles/dust_settling_lib.dir/src/dust_settling.cpp.o
+[ 50%] Linking CXX static library libdust_settling_lib.a
+[ 50%] Built target dust_settling_lib
+[ 75%] Building CXX object CMakeFiles/dust_settling.dir/src/main.cpp.o
+[100%] Linking CXX executable dust_settling
+[100%] Built target dust_settling

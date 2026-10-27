@@ -2,7 +2,7 @@
 
 本项目是 [protoplanetary-dust-settling](https://github.com/yt2523/protoplanetary-dust-settling)
 （`main` @ `6dd899a89203fb88c8724e69e10c208e4faf6d66`）三个核心求解器的 **C++17 忠实移植**，
-仅用标准库实现，不依赖 NumPy。移植目的为数值行为逐位对齐的验收验证，不提出任何加速或物理新发现。
+仅用标准库实现，不依赖 NumPy。移植目的为数值行为对照的验收验证，不提出任何加速或物理新发现。
 
 ## 范围
 
@@ -15,13 +15,28 @@
 
 ## 构建
 
-C++ 二进制由 D 盘后端 Ubuntu WSL 的 g++ 15.2.0 + **CMake 4.4.4**（`.tools/cmake` 内自带，非系统安装）编译：
+C++ 二进制由 D 盘后端 Ubuntu WSL 的 g++ 15.2.0 + **CMake 4.4.4**（`.tools/cmake` 内自带，非系统安装）编译。
+
+**标准命令（读者可在装有 CMake 的任意环境使用）：**
 
 ```bash
-wsl.exe bash -lc 'cd /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/build-cmake && \
-  /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake .. -DCMAKE_BUILD_TYPE=Release && \
-  /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake --build . -j4'
+cmake -S . -B build-cmake -DCMAKE_BUILD_TYPE=Release
+cmake --build build-cmake -j4
 ```
+
+**本仓库实际使用的本地自带 CMake 绝对命令（Windows WSL 后端）：**
+
+```bash
+wsl.exe bash -lc 'cd /mnt/d/Codex/tmp/dust-cpp-publish-20261027/cpp && \
+  TMPDIR=/mnt/d/Codex/tmp \
+  /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake \
+    -S . -B build-cmake -DCMAKE_BUILD_TYPE=Release && \
+  /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake \
+    --build build-cmake -j4'
+```
+
+> 产物路径 `build-cmake/dust_settling`（本出版布局内）；路径由 `verify.py`/`regression.py`
+> 从自身 `ROOT` 或 `--binary` 派生并做 WSL `/mnt/<drive>/...` 转换，无硬编码绝对交付路径。
 
 `CMakeLists.txt` 配置静态库 `dust_settling_lib` + CLI `dust_settling`，并显式禁用浮点收缩
 （GNU/Clang 用 `-ffp-contract=off`，MSVC 用 `/fp:strict`），无 fast-math。
@@ -52,12 +67,37 @@ C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -B verify/verify.
 ```
 
 该脚本 `import` 原始 Python 模块作为基准（`--source-repo` / `--binary` 可覆盖默认路径），
-经 `wsl.exe --exec` 以 argv 直接调 C++ 二进制，逐点比较。结果写入 `validation/results.csv` 与
+经 `wsl.exe --exec` 以 argv 直接调 C++ 二进制，逐点比较。每个 Python 参考用例在**受限子进程**
+（30 s 超时、无重试，`verify/_ref_worker.py`）中隔离运行。结果写入 `validation/results.csv` 与
 `validation/results.json`，并为每个用例保存 Python 参考 profile。本轮（见 `验证报告.md`）：
 **17 项数值校验 PASS + 1 项 EXPECTED_INSTABILITY（继承的负密度，单独报告不裁剪）+ 1 项
-branch-coverage PASS**，0 失败；密度/坐标逐点差 ≤ EPS_ABS + EPS_REL·|P|，质量平衡残差按
-独立积分质量 + 出流积分通量复核（不信任发出的 mass_balance_error），收敛阶 0.9003。
+convergence PASS + 1 项 branch-coverage PASS**，0 失败；密度/坐标逐点差 ≤ EPS_ABS + EPS_REL·|P|，
+质量平衡残差按独立积分质量 + 出流积分通量复核（不信任发出的 mass_balance_error），收敛阶 0.9003。
 一个 diff=.7 压力用例暴露继承的负密度，按 EXPECTED_INSTABILITY 单独报告。
+
+**小型运行示例（单个用例 + 绘图，均使用已保存 profile，不重跑求解器）：**
+
+```bash
+# 单次 advection 运行（写 outdir/profile.csv + diagnostics.txt）
+wsl.exe --exec build-cmake/dust_settling advection 1 0.01 0.5 50 /mnt/d/<path>/outdir
+
+# 轻量绘图（读取已保存的 C++/Python profile，不重跑求解器）
+C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -B verify/plot.py
+```
+
+**CLI 稳健性回归（20 项，含负 v_cap 拒绝、来源哈希前后一致性）：**
+
+```bash
+C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -B verify/regression.py
+```
+
+**验收门单元测试（见证质量/最小值变异从不被误判为 PASS）：**
+
+```bash
+C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -m pytest verify/test_gates.py -v
+```
+
+来源 SHA 前后一致、精确命令与结果见 `validation/provenance.json`。
 
 ## 目录
 

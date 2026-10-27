@@ -572,6 +572,12 @@ std::vector<double> TurbulenceSolver::upwind(const std::vector<double>& r,
 }
 
 void TurbulenceSolver::run(bool stop_when_cross) {
+    // v_cap_factor is public/mutable; reject non-finite / non-positive values at
+    // run-time before initial_dust_points() uses it to clip velocities (a <=0 cap
+    // would invert the clip direction).  Mirrors the CLI check in main.cpp.
+    if (!(v_cap_factor > 0.0) || std::isnan(v_cap_factor) || std::isinf(v_cap_factor)) {
+        throw std::runtime_error("v_cap_factor must be finite and > 0");
+    }
     calculate_natural_unit();
     initial_dust_points();
     std::vector<double> r = rho;

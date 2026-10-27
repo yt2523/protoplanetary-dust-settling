@@ -141,6 +141,8 @@ int main(int argc, char** argv) {
             if (D < 0.0) throw std::runtime_error("D must be >= 0");
             if (dust_density <= 0.0) throw std::runtime_error("dust_density must be > 0");
             if (Nz < MIN_GRID || Nz > MAX_GRID) throw std::runtime_error("Nz must be in [2, 1000000]");
+            if (!(v_cap > 0.0) || std::isnan(v_cap) || std::isinf(v_cap))
+                throw std::runtime_error("v_cap must be finite and > 0");
             TurbulenceSolver s(total_time, Nz, a_lim, d_lim, R_AU, a_micron, zmax, D, dust_density);
             s.v_cap_factor = v_cap;
             s.run(stop);

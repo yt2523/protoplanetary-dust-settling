@@ -1,3 +1,4 @@
+source manifest before: {"files": {"dust_solver.py": {"exists": true, "path": "D:\\Codex\\tmp\\dust-cpp-publish-20261027\\src\\dust_solver.py", "sha256": "1df12a933235d5224bcedcfa02119ef85b827c992a2806d51657a466b08b5165"}, "dust_solver_turbulence.py": {"exists": true, "path": "D:\\Codex\\tmp\\dust-cpp-publish-20261027\\src\\dust_solver_turbulence.py", "sha256": "3fdea0d9632bcb538c65ec4203846047c07e0f6b91584762e31e0b350d304459"}, "pure_advection.py": {"exists": true, "path": "D:\\Codex\\tmp\\dust-cpp-publish-20261027\\src\\pure_advection.py", "sha256": "84e83403ed01867305fc4fa53e336ec0c12d6dd31b5e9e9d0420fbd7188d7370"}}, "manifest_sha256": "329b3c5279a5e106ba3964d9bb301dff7ce33a2e4ea19fc71d7207ae9ed25d6d", "root": "D:\\Codex\\tmp\\dust-cpp-publish-20261027\\src"}
 [ASSERT-OK] bad_argc_advection 
 [ASSERT-OK] garbage_number 
 [ASSERT-OK] nan_input 
@@ -5,11 +6,18 @@
 [ASSERT-OK] grid_N1_rejected 
 [ASSERT-OK] grid_N0_rejected 
 [ASSERT-OK] huge_step_rejected 
+[ASSERT-OK] vcap_negative_rejected 
+[ASSERT-OK] vcap_zero_rejected 
+[ASSERT-OK] vcap_nan_rejected 
 [ASSERT-OK] output_error_nonzero 
 [ASSERT-OK] csv_case_runs 
 [ASSERT-OK] csv_header_4_fields 
 [ASSERT-OK] csv_all_rows_4_fields 
 [ASSERT-OK] lam_csv_header_4_fields 
-[ASSERT-OK] source_identity_stable 
+[ASSERT-OK] source_override_copy_runs 
+[ASSERT-OK] source_override_no_original_pollution 
+[ASSERT-OK] source_identity_unchanged_whole_run 
+[ASSERT-OK] emitted_mass_gate_matches 
+[ASSERT-OK] emitted_mass_gate_off_by_1e6_fails 
 ----------------------------------------------------------------------
-SUMMARY: 13 regression checks, 0 failed
+SUMMARY: 20 regression checks, 0 failed
