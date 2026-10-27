@@ -1,0 +1,15 @@
+# Build artifacts & caches
+build/
+build-cmake/
+.cache/
+.tools/
+
+# Model / event logs
+*.jsonl
+
+# Local audit logs (keep machine-readable evidence, drop transient logs)
+validation/*.log
+
+# Python caches
+__pycache__/
+*.pyc

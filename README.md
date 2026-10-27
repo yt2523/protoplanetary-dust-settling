@@ -356,3 +356,7 @@ because of the Δt ∝ h²/α parabolic limit — expect minutes per configurati
 - **Vertically isothermal, static gas.** The gas profile is prescribed and does not respond to the
   dust, excluding the streaming instability and drag back-reaction.
 - **1-D.** Radial drift is not modelled; each radius is an independent column.
+
+## C++17 port and review checkpoint
+The C++17 faithful-port baseline, validation evidence, and Chinese usage notes are in [cpp/README.md](cpp/README.md).
+Read [cpp/RUN_LOG.md](cpp/RUN_LOG.md) for independent-review findings, inherited numerical limitations, and the iteration history.

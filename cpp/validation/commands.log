@@ -1,0 +1,35 @@
+# Audit command log — all D: paths, no git commit/push, no install
+# Generated 2026-10-26, Windows PowerShell + D-backed Ubuntu WSL 2 (g++ 15.2.0)
+
+# 0. TDD: demonstrate missing binary fails (exit code 2)
+#    C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -B verify/verify.py
+#    -> "C++ binary NOT found" ; EXITCODE=2
+
+# 1. Configure + build with CMake 4.4.4 (provided in .tools/cmake, not system install)
+#    CMake executable: .tools/cmake/cmake/data/bin/cmake (version 4.4.4, run under WSL)
+wsl.exe bash -lc 'cd /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp && rm -rf build-cmake && mkdir -p build-cmake && cd build-cmake && /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake .. -DCMAKE_BUILD_TYPE=Release'
+#    -> CFG_EXIT=0  (add_compile_options(-ffp-contract=off); no fast-math)
+wsl.exe bash -lc 'cd /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/build-cmake && /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake --build . -j4'
+#    -> BUILD_EXIT=0 (no warnings); binary: build-cmake/dust_settling
+
+# 2. Acceptance run (imports original Python modules; invokes C++ binary via wsl --exec)
+C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -B D:/Codex/downloads/protoplanetary-dust-settling-cpp/verify/verify.py
+#    -> (historical, pre-final-gates run) 18 cases, 0 failed, 1 expected-instability stress ; EXITCODE=0
+#    Density pointwise abs diff measured 0.0 under the strict EPS_ABS+EPS_REL*|P| gate;
+#    mass residual recomputed independently (never trusting emitted mass_balance_error).
+
+# 4. FINAL_REVIEW repair round (strict gates, no bitwise/all-done claims)
+#    Source identity manifest (sha256, unchanged read-only origin):
+#      pure_advection.py          84e83403ed01867305fc4fa53e336ec0c12d6dd31b5e9e9d0420fbd7188d7370
+#      dust_solver.py             1df12a933235d5224bcedcfa02119ef85b827c992a2806d51657a466b08b5165
+#      dust_solver_turbulence.py  3fdea0d9632bcb538c65ec4203846047c07e0f6b91584762e31e0b350d304459
+wsl.exe bash -lc 'cd /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/build-cmake && export TMPDIR=/mnt/d/Codex/tmp && /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake .. -DCMAKE_BUILD_TYPE=Release && /mnt/d/Codex/downloads/protoplanetary-dust-settling-cpp/.tools/cmake/cmake/data/bin/cmake --build . -j4'
+#    -> CFG_EXIT=0, BUILD_EXIT=0 (no warnings); -ffp-contract=off compiler-conditional
+C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -B D:/Codex/downloads/protoplanetary-dust-settling-cpp/verify/verify.py
+#    -> SUMMARY: 19 cases, 0 failed, 1 expected-instability stress ; EXITCODE=0
+#    -> branch_coverage 13/13 ok ; strict EPS_ABS+EPS_REL*|P| ; independent mass+flux
+C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -B D:/Codex/downloads/protoplanetary-dust-settling-cpp/verify/regression.py
+#    -> SUMMARY: 13 regression checks, 0 failed ; EXITCODE=0
+C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe -B D:/Codex/downloads/protoplanetary-dust-settling-cpp/verify/plot.py
+#    -> saved validation/profiles_compare.png
+

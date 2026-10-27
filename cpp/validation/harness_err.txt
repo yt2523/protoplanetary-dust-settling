@@ -1,0 +1,2 @@
+D:\Codex/tmp/phd-github-audit-2026-10-26/protoplanetary-dust-settling/src\dust_solver_turbulence.py:97: RuntimeWarning: divide by zero encountered in scalar divide
+  max_dt_diff = self.d_lim * self.h**2 / (self.alpha * density_max)

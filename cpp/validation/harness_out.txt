@@ -1,0 +1,26 @@
+source repo: D:/Codex/tmp/phd-github-audit-2026-10-26/protoplanetary-dust-settling/src
+source identity: {"dust_solver.py": "1df12a933235d5224bcedcfa02119ef85b827c992a2806d51657a466b08b5165", "dust_solver_turbulence.py": "3fdea0d9632bcb538c65ec4203846047c07e0f6b91584762e31e0b350d304459", "pure_advection.py": "84e83403ed01867305fc4fa53e336ec0c12d6dd31b5e9e9d0420fbd7188d7370"}
+[PASS] adv_1_0.01_0.5_50  
+[PASS] adv_-1_0.0025_0.5_200  
+[PASS] adv_0_0.01_0.5_50  
+[PASS] adv_1_0.006_0.5_100  
+[PASS] adv_1_0.01_0.001_100  
+[PASS] adv_odd_51  
+[PASS] adv_cfl_eps  
+[PASS] adv_zero_step  
+[PASS] adv_frac  
+[PASS] lam_1000000_100_0.5_100_1_4  
+[PASS] lam_clamp  
+[PASS] turb_1000000_100_0.3_0.2_100_1_4_1e-05_1_0  
+[PASS] turb_10000_50_0.3_0.2_100_1_4_0_1_0  
+[PASS] turb_cross_stop  
+[PASS] turb_cross_continue  
+[PASS] turb_diff_repr  
+[EXPECTED_INSTABILITY] turb_diff_stress  stress case: min_rho_cpp=-0.012367943426555617 min_rho_py=-0.012367943426555617 (finite both)
+[PASS] convergence  strictly_decreasing=True last_pair_order=0.9003
+[PASS] branch_coverage  {"cont_Nt_gt_formation_step": true, "cont_steps_eq_Nt": true, "lam_L_eq_4": true, "lam_z_real_differs_zH": true, "lam_zmax_over_H_gt_4": true, "repr_alpha_near_1e3": true, "repr_cum_loss_gt_1e8": true, "repr_loss_matches_M": true, "same_tf_stop_cont": true, "stop_steps_lt_Nt": true, "stop_tf_exists": true, "turb_cap_count_gt_0": true, "turb_z_real_eq_zH": true}
+----------------------------------------------------------------------
+SUMMARY: 19 cases, 0 failed, 1 expected-instability stress
+  STRESS(EXPECTED_INSTABILITY) turb_diff_stress: stress case: min_rho_cpp=-0.012367943426555617 min_rho_py=-0.012367943426555617 (finite both)
+CSV: D:\Codex\downloads\protoplanetary-dust-settling-cpp\validation\results.csv
+JSON: D:\Codex\downloads\protoplanetary-dust-settling-cpp\validation\results.json
